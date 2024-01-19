@@ -1,0 +1,21 @@
+База данных:
+
+
+MORNING(EVENING)_ROUTINE:
+    step: INT;
+    task: STRING;
+
+CONFIG: будет храниться в json.
+    notification_enabled: BOOL;
+    morning_routine_enabled: BOOL;
+    evening_routine_enabled: BOOL;
+
+
+
+TODAY_INFO:
+    morning_routine_progress: INT;
+    evening_routine_progress: INT;
+
+
+
+Сделать таймер, который будет показывать сколько времени ушло на каждый пункт morning routine
