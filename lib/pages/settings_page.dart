@@ -11,6 +11,12 @@ class SettingsPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: MyAppStyle.menuMainColor,
         title: const Text('Settings'),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, "/");
+            },
+            icon: const Icon(Icons.arrow_back)
+        ),
       ),
       body: ListView(
         children: [

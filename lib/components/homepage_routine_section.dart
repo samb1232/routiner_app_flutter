@@ -129,7 +129,7 @@ class _HomepageRoutineSectionState extends State<HomepageRoutineSection> {
                     : MyAppStyle.eveningMainColor,
               ),
               onPressed: checkIfStartButtonActive() ? () {
-                Navigator.pushNamed(context, "/${widget.routine.name}_routine");
+                Navigator.pushReplacementNamed(context, "/${widget.routine.name}_routine");
               }
               : null,
               child: const Text(

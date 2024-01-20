@@ -16,9 +16,7 @@ enum Tables {
 
 enum Routines {
   morning,
-  evening,
-  huivning,
-  huivning2
+  evening
 }
 
 
@@ -138,11 +136,20 @@ class DatabaseHelper {
         where: 'id = ?', whereArgs: [data['id']]);
   }
   
-  // Обновление записи для 
+  // Обновление записи v2 (Govnokod)
   Future<int> _updateDataByStep(Map<String, dynamic> data, Tables table) async {
     Database dbClient = await db;
     return await dbClient.update(table.name, data,
         where: 'step = ?', whereArgs: [data['step']]);
+  }
+
+  Future<void> _updateDataInTable(Map<String, dynamic> data, Tables table, {String? where}) async {
+    Database dbClient = await db;
+    await dbClient.update(
+      table.name,
+      data,
+      where: where,
+    );
   }
 
   // Удаление записи
@@ -311,20 +318,72 @@ class DatabaseHelper {
   }
 
   // Функции работы с таблицей daysStreak
-  Future<List<Map<String, dynamic>>> _getDayData(DateTime day) async {
+  Future<Map<String, dynamic>?> getDayStreakData(DateTime day) async {
     Database dbClient = await db;
-    return await dbClient.query(
+    List<Map<String, dynamic>> query = await dbClient.query(
         Tables.dayStreakInfo.name,
-        where: 'date = ?', whereArgs: ["${day.year}-${day.month}-${day.day}"]
+        where: 'date = ?', whereArgs: ["${day.year}-${day.month}-${day.day}"],
+        limit: 1
     );
+    if (query.isEmpty) {
+      return null;
+    }
+    return query[0];
   }
 
-  Future<void> _addDayData(DateTime day) async {
+
+  // Функции работы с таблицей daysStreak
+  Future<bool> checkIfDayIsStreaked(DateTime day) async {
+    Map<String, dynamic>? dayStreakInfo = await getDayStreakData(day);
+    if (dayStreakInfo == null) {
+      return false;
+    }
+    if (dayStreakInfo["morningDone"] + dayStreakInfo["eveningDone"] == 2) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> addEmptyDayStreak(DateTime day) async {
     await _insertDataToTable({
       "date": "${day.year}-${day.month}-${day.day}",
-      "isStreaked": 0
+      "morningDone": 0,
+      "eveningDone": 0
     }, Tables.dayStreakInfo);
   }
+
+  Future<void> setMorningDone() async {
+    DateTime day = DateTime.now();
+    await _updateDataInTable({
+      "morningDone": 1
+    }, Tables.dayStreakInfo, where: "date = '${day.year}-${day.month}-${day.day}'");
+  }
+
+  Future<void> setEveningDone() async {
+    DateTime day = DateTime.now();
+    await _updateDataInTable({
+      "eveningDone": 1
+    }, Tables.dayStreakInfo, where: "date = '${day.year}-${day.month}-${day.day}'");
+  }
+
+
+  Future<int> getDaysStreakNumber() async {
+    DateTime date = DateTime.now();
+    int streakCounter = 0;
+
+    if (!await checkIfDayIsStreaked(date)) {
+      date = date.subtract(const Duration(days: 1));
+    }
+
+    while (await checkIfDayIsStreaked(date)) {
+      streakCounter++;
+      date = date.subtract(const Duration(days: 1));
+    }
+
+    return streakCounter;
+  }
+
+
 
 
   // TODO: Сделать функцию, подсчитывающую количество streak дней подряд

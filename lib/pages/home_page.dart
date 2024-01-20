@@ -16,12 +16,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<TodoItem> todoList = [];
+  int daysStreak = -1;
+  bool isTodayStreaked = false;
+  List<bool> daysStreakArr = List.generate(7, (index) => false);
 
   @override
   void initState() {
     super.initState();
     loadChecklist();
     processTodayProgress();
+    loadDaysStreakArr();
   }
 
   Future<void> loadChecklist() async {
@@ -32,10 +36,35 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> processTodayProgress() async {
-    // TODO: Доделать функцию. Добавить провеку в базе данных на наличие этого дня
+
+  Future<void> loadDaysStreakArr() async {
     DatabaseHelper dbHelper = DatabaseHelper();
-    await dbHelper.clearTodayRoutinesProgress();
+    List<bool> newDaysStreakArr = List.generate(7, (index) => false);
+    for (int index = 0; index < newDaysStreakArr.length; index++) {
+      newDaysStreakArr[index] = await dbHelper.checkIfDayIsStreaked(
+          DateTime.now().subtract(Duration(days: index))
+      );
+    }
+    setState(() {
+      daysStreakArr = newDaysStreakArr;
+    });
+  }
+
+  Future<void> processTodayProgress() async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    DateTime today = DateTime.now();
+    Map<String, dynamic>? dayData = await dbHelper.getDayStreakData(today);
+    if (dayData == null) {
+      await dbHelper.clearTodayRoutinesProgress();
+      await dbHelper.addEmptyDayStreak(today);
+    }
+    int dbDaysStreak = await dbHelper.getDaysStreakNumber();
+    bool dbIsTodayStreaked = await dbHelper.checkIfDayIsStreaked(today);
+    setState(() {
+      daysStreak = dbDaysStreak;
+      isTodayStreaked = dbIsTodayStreaked;
+    });
+    
   }
 
   @override
@@ -99,34 +128,34 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.black,
                 width: 4,
               ),
-              color: Colors.orangeAccent,
+              color: isTodayStreaked ? Colors.orangeAccent : Colors.grey,
             ),
-            child: const Center(
+            child: Center(
                 child: Column(mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       "streak",
                       style: TextStyle(
                         fontSize: 30,
                       ),
                     ),
-                    Padding(padding: EdgeInsets.only(top: 20)),
+                    const Padding(padding: EdgeInsets.only(top: 20)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        isTodayStreaked ? const Icon(
                           Icons.local_fire_department_rounded,
                           size: 50,
                           color: Colors.deepOrange,
-                        ),
+                        ) : Container(),
                         Text(
-                          "21",
-                          style: TextStyle(
+                          "$daysStreak",
+                          style: const TextStyle(
                             fontSize: 60,
                           ),
                         ),
-                        Text(
-                          " day",
+                        const Text(
+                          " days",
                             style: TextStyle(
                               fontSize: 20,
                             )
@@ -144,19 +173,19 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  dayCircle("23"),
-                  dashBetweenCircles(),
-                  dayCircle("24"),
-                  dashBetweenCircles(),
-                  dayCircle("25"),
-                  dashBetweenCircles(),
-                  dayCircle("26"),
-                  dashBetweenCircles(),
-                  dayCircle("27"),
-                  dashBetweenCircles(),
-                  dayCircle("28"),
-                  dashBetweenCircles(),
-                  dayCircle("29", isToday: true),
+                  dayCircle(_getDayBefore(6), daysStreakArr[6]),
+                  dashBetweenCircles(daysStreakArr[6] && daysStreakArr[5]),
+                  dayCircle(_getDayBefore(5), daysStreakArr[5]),
+                  dashBetweenCircles(daysStreakArr[5] && daysStreakArr[4]),
+                  dayCircle(_getDayBefore(4), daysStreakArr[4]),
+                  dashBetweenCircles(daysStreakArr[4] && daysStreakArr[3]),
+                  dayCircle(_getDayBefore(3), daysStreakArr[3]),
+                  dashBetweenCircles(daysStreakArr[3] && daysStreakArr[2]),
+                  dayCircle(_getDayBefore(2), daysStreakArr[2]),
+                  dashBetweenCircles(daysStreakArr[2] && daysStreakArr[1]),
+                  dayCircle(_getDayBefore(1), daysStreakArr[1]),
+                  dashBetweenCircles(daysStreakArr[1] && daysStreakArr[0]),
+                  dayCircle(_getDayBefore(0), daysStreakArr[0], isToday: true),
 
                 ],
               )
@@ -291,15 +320,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget dayCircle(String dayText, {bool isToday = false}) {
+  Widget dayCircle(String dayText, bool isStreaked, {bool isToday = false}) {
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.lightGreenAccent,
+        color: isStreaked ? Colors.lightGreenAccent : Colors.grey,
         border: isToday ? Border.all(
-          color: Colors.green,
+          color: isStreaked ? Colors.green : Colors.black,
           width: 2,
         ) : null,
       ),
@@ -309,12 +338,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget dashBetweenCircles() {
+  Widget dashBetweenCircles(bool isStreaked) {
     return Container(
       width: 20,
       height: 2,
-      decoration: const BoxDecoration(
-        color: Colors.lightGreenAccent,
+      decoration: BoxDecoration(
+        color: isStreaked ? Colors.lightGreenAccent : Colors.grey,
       ),
     );
   }
@@ -336,4 +365,12 @@ class _HomePageState extends State<HomePage> {
       todoList.add(newTask);
     });
   }
+
+  String _getDayBefore(int difference) {
+    DateTime date = DateTime.now();
+    DateTime dateBefore = date.subtract(Duration(days: difference));
+    return dateBefore.day.toString();
+
+  }
+
 }

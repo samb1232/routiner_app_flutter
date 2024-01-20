@@ -234,7 +234,13 @@ class _RoutineProcessPageState extends State<RoutineProcessPage> {
   void finishRoutine() async {
     DatabaseHelper dbHelper = DatabaseHelper();
     dbHelper.updateTodayRoutineProgress(routineItems, widget.routine);
-    Navigator.pop(context);
+    if (widget.routine == Routines.morning) {
+      dbHelper.setMorningDone();
+    }
+    else {
+      dbHelper.setEveningDone();
+    }
+    Navigator.pushReplacementNamed(context, "/");
   }
 
 
