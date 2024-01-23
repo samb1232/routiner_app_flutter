@@ -70,47 +70,52 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
 
-    return DefaultTabController(
-        length: 3,
-        initialIndex: 1,
-        child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: MyAppStyle.menuMainColor,
-            title: const Text('Routiner app'),
-            centerTitle: true,
-            actions: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    Navigator.pushNamed(context, "/settings");
-                  },
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
+      },
+      child: DefaultTabController(
+          length: 3,
+          initialIndex: 1,
+          child: Scaffold(
+            appBar: AppBar(
+              backgroundColor: MyAppStyle.menuMainColor,
+              title: const Text('Routiner app'),
+              centerTitle: true,
+              actions: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, "/settings");
+                    },
+                  ),
                 ),
+              ],
+              bottom:  const TabBar(
+                  tabs: [
+                    Tab(
+                      icon: Icon(Icons.sunny),
+                    ),
+                    Tab(
+                      icon: Icon(Icons.home)
+                    ),
+                    Tab(
+                      icon: Icon(Icons.nightlight_round_outlined),
+                    ),
+                  ]
               ),
-            ],
-            bottom:  const TabBar(
-                tabs: [
-                  Tab(
-                    icon: Icon(Icons.sunny),
-                  ),
-                  Tab(
-                    icon: Icon(Icons.home)
-                  ),
-                  Tab(
-                    icon: Icon(Icons.nightlight_round_outlined),
-                  ),
-                ]
+            ),
+            body: TabBarView(
+              children: [
+                const HomepageRoutineSection(routine: Routines.morning),
+                mainScreenPage(),
+                const HomepageRoutineSection(routine: Routines.evening)
+              ],
             ),
           ),
-          body: TabBarView(
-            children: [
-              const HomepageRoutineSection(routine: Routines.morning),
-              mainScreenPage(),
-              const HomepageRoutineSection(routine: Routines.evening)
-            ],
-          ),
-        ),
+      ),
     );
   }
 
@@ -370,7 +375,5 @@ class _HomePageState extends State<HomePage> {
     DateTime date = DateTime.now();
     DateTime dateBefore = date.subtract(Duration(days: difference));
     return dateBefore.day.toString();
-
   }
-
 }

@@ -138,7 +138,8 @@ class _ConfigureRoutinePageState extends State<ConfigureRoutinePage> {
                 child: const SizedBox(
                     width: 70,
                     height: 70,
-                    child: Icon(Icons.add, size: 35)),
+                    child: Icon(Icons.add, size: 35)
+                ),
               ),
             ],
           ),

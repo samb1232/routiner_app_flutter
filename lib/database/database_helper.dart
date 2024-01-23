@@ -213,13 +213,25 @@ class DatabaseHelper {
   // Функции взаимодействия с таблицей morningRoutine и eveningRoutine
 
   Future<void> updateRoutineInfo(List<String> newValues, Routines routine) async {
-    Tables table = (routine == Routines.morning)
+    Tables table1 = (routine == Routines.morning)
         ? Tables.morningRoutine : Tables.eveningRoutine;
-    await _clearTable(table);
+    await _clearTable(table1);
+    Tables table2 = (routine == Routines.morning)
+        ? Tables.todayMorningProgress : Tables.todayEveningProgress;
+    await _clearTable(table2);
+
     for (int i = 0; i < newValues.length; i++) {
       await _insertDataToTable(
           {"step": i, "task": newValues[i]},
-          table
+          table1
+      );
+      await _insertDataToTable(
+          {
+            "step": i,
+            "state": 0,
+            "timeSpent": 0
+          },
+          table2
       );
     }
   }
@@ -338,7 +350,7 @@ class DatabaseHelper {
     if (dayStreakInfo == null) {
       return false;
     }
-    if (dayStreakInfo["morningDone"] + dayStreakInfo["eveningDone"] == 2) {
+    if (dayStreakInfo["morningDone"] + dayStreakInfo["eveningDone"] >= 1) {
       return true;
     }
     return false;

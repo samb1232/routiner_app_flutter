@@ -16,15 +16,15 @@ class HomepageRoutineSection extends StatefulWidget {
 
 class _HomepageRoutineSectionState extends State<HomepageRoutineSection> {
 
-
-
-
   List<RoutineItem> routineList = [];
+
+  bool isRoutineFinishedToday = false;
 
   @override
   void initState() {
     super.initState();
     loadRoutineList();
+    checkIsRoutineFinishedToday();
   }
 
   Future<void> loadRoutineList() async {
@@ -32,6 +32,25 @@ class _HomepageRoutineSectionState extends State<HomepageRoutineSection> {
     List<RoutineItem> items = await dbHelper.getRoutineItems(widget.routine);
     setState(() {
       routineList = items;
+    });
+  }
+
+  Future<void> checkIsRoutineFinishedToday() async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    Map<String, dynamic>? dayStreakData = await dbHelper.getDayStreakData(DateTime.now());
+
+    bool dbIsRoutineFinishedToday;
+    if (dayStreakData == null) {
+      dbIsRoutineFinishedToday = false;
+    }
+    else {
+      dbIsRoutineFinishedToday = dayStreakData[widget.routine == Routines.morning
+          ? "morningDone" : "eveningDone"] == 1;
+    }
+
+
+    setState(() {
+      isRoutineFinishedToday = dbIsRoutineFinishedToday;
     });
   }
   
@@ -128,13 +147,13 @@ class _HomepageRoutineSectionState extends State<HomepageRoutineSection> {
                       MyAppStyle.morningMainColor
                     : MyAppStyle.eveningMainColor,
               ),
-              onPressed: checkIfStartButtonActive() ? () {
+              onPressed: (routineList.isEmpty || isRoutineFinishedToday) ? null
+              : () {
                 Navigator.pushReplacementNamed(context, "/${widget.routine.name}_routine");
-              }
-              : null,
-              child: const Text(
-                "Start",
-                style: TextStyle(
+              },
+              child: Text(
+                isRoutineFinishedToday ? "Already done" : "Start",
+                style: const TextStyle(
                   fontSize: 25,
                 ),
               ),
@@ -156,12 +175,4 @@ class _HomepageRoutineSectionState extends State<HomepageRoutineSection> {
     }
   }
 
-  bool checkIfStartButtonActive() {
-    if (routineList.isEmpty) {
-      return false;
-    }
-
-    return true;
-
-  }
 }
